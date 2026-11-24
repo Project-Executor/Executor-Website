@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EXECUTOR — 명령을 실행하고, 버그를 제거하라</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:Galmuri11;src:url(assets/Galmuri11.woff2) format('woff2')}
+@font-face{font-family:Galmuri11B;src:url(assets/Galmuri11-Bold.woff2) format('woff2')}
+@font-face{font-family:GalmuriMono;src:url(assets/GalmuriMono11.woff2) format('woff2')}
+.site{--bg:#0a0716;--bg2:#100c22;--panel:#15112e;--body:#0c0a18;--border:#4c4aa8;--divider:#2a2358;--text:#eaf2ff;--muted:#8b98b8;--dim:#4b5675;--accent:#22d3ee;--accent2:#b6f4ff;--onaccent:#0a0716;--shadow:#000000;--grid:rgba(76,74,168,.16);--title:#36307a;--titletext:#eaf2ff;--chip:#1b1640;--red:#ff4d5e;--green:#5cf08a;--gold:#ffd84a;--pink:#ff4fa3;--orange:#ff9a3c;--lilac:#c3a6ff;--heroglow:rgba(91,44,240,.35);--glow2:rgba(34,211,238,.12);--band:#15112e}
+*{box-sizing:border-box;margin:0;padding:0}
+.site{width:1440px;background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:16px;line-height:1.7;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:48px 48px;overflow:hidden}
+.px{font-family:Galmuri11,monospace} .pxb{font-family:Galmuri11B,monospace} .mono{font-family:GalmuriMono,monospace}
+img{display:block;image-rendering:auto}
+.wrap{width:1200px;margin:0 auto}
+/* window */
+.win{background:var(--body);border:2px solid var(--border);box-shadow:6px 6px 0 var(--shadow)}
+.wt{height:36px;background:var(--title);border-bottom:2px solid #22d3ee;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 14px;color:var(--titletext)}
+.wtl{font-family:GalmuriMono,monospace;font-size:12px;letter-spacing:.5px}
+.wbtn{display:flex;gap:4px} .wbtn i{font-style:normal;width:20px;height:20px;display:grid;place-items:center;font-size:12px;font-family:Galmuri11,monospace;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25)}
+.wbtn i.x{background:#ff4d5e;border-color:#ff4d5e;color:#fff}
+.wb img{width:100%;height:auto}
+/* nav */
+nav{position:relative;z-index:5;height:72px;border-bottom:2px solid var(--divider);background:var(--bg2)}
+nav .wrap{height:100%;display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:10px;font-family:Galmuri11B,monospace;font-size:24px;letter-spacing:3px;color:var(--text)}
+.logo .lg{width:28px;height:28px;background:var(--accent);box-shadow:4px 4px 0 #5b2cf0;display:grid;place-items:center;color:var(--onaccent);font-size:12px;letter-spacing:0}
+.links{display:flex;gap:36px;font-family:Galmuri11,monospace;font-size:14px;color:var(--muted)}
+.links a.on{color:var(--accent)}
+.navr{display:flex;align-items:center;gap:12px}
+.tog{display:flex;border:2px solid var(--border);height:36px;font-family:Galmuri11,monospace;font-size:12px}
+.tog span{padding:0 12px;display:grid;place-items:center;color:var(--muted)}
+.tog span.on{background:var(--title);color:#fff}
+.btn{display:inline-flex;align-items:center;gap:10px;height:48px;padding:0 24px;font-family:Galmuri11B,monospace;font-size:14px;border:2px solid var(--border);color:var(--text);background:var(--panel);box-shadow:4px 4px 0 var(--shadow)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--onaccent);box-shadow:4px 4px 0 #5b2cf0}
+.btn.sm{height:36px;padding:0 16px;font-size:12px}
+/* hero */
+.hero{position:relative;padding:96px 0 120px}
+.hero:before{content:'';position:absolute;left:-200px;top:-100px;width:900px;height:700px;background:radial-gradient(closest-side,var(--heroglow),transparent);pointer-events:none}
+.hero:after{content:'';position:absolute;right:-150px;bottom:-100px;width:800px;height:600px;background:radial-gradient(closest-side,var(--glow2),transparent);pointer-events:none}
+.hero .wrap{position:relative;z-index:1;display:grid;grid-template-columns:480px 1fr;gap:64px;align-items:center}
+.tag{display:inline-flex;align-items:center;gap:8px;font-family:GalmuriMono,monospace;font-size:12px;color:var(--accent);border:2px solid var(--accent);padding:6px 12px;margin-bottom:28px}
+.tag:before{content:'';width:8px;height:8px;background:var(--green)}
+h1{font-family:Galmuri11B,monospace;font-size:48px;line-height:1.35;letter-spacing:-.5px;margin-bottom:24px;word-break:keep-all}
+h1 em{font-style:normal;color:var(--accent)}
+.lead{font-size:18px;color:var(--muted);margin-bottom:40px;word-break:keep-all}
+.ctas{display:flex;gap:16px;margin-bottom:40px}
+.meta{display:flex;gap:32px;font-family:GalmuriMono,monospace;font-size:12px;color:var(--dim)}
+.meta b{display:block;font-family:Galmuri11B,monospace;font-size:24px;color:var(--text);font-weight:normal;margin-bottom:4px}
+.herowin{position:relative}
+.herowin .win{box-shadow:12px 12px 0 #5b2cf0}
+.term{position:absolute;left:-48px;bottom:-56px;width:340px;z-index:2}
+.term .wb{padding:14px 16px;font-family:GalmuriMono,monospace;font-size:12px;line-height:1.9;color:var(--muted);background:#0c0a18}
+.term .wb .g{color:#5cf08a} .term .wb .c{color:#22d3ee} .term .wb .r{color:#ff4d5e}
+.cursor{display:inline-block;width:8px;height:14px;background:#22d3ee;vertical-align:middle}
+/* section */
+section{padding:120px 0;position:relative}
+.band{background:var(--band);border-top:2px solid var(--divider);border-bottom:2px solid var(--divider)}
+.sechead{margin-bottom:56px}
+.secnum{display:block;font-family:GalmuriMono,monospace;font-size:14px;color:var(--accent);margin-bottom:12px}
+h2{font-family:Galmuri11B,monospace;font-size:36px;line-height:1.4;font-weight:normal;word-break:keep-all}
+.secsub{margin-top:12px;color:var(--muted);font-size:17px;max-width:640px;word-break:keep-all}
+h3{font-family:Galmuri11B,monospace;font-weight:normal;font-size:24px;line-height:1.4;margin-bottom:12px}
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:32px}
+.step .wb{padding:28px;min-height:330px}
+.step p{color:var(--muted);font-size:15px;word-break:keep-all}
+.stepnum{font-family:GalmuriMono,monospace;font-size:12px;color:var(--accent);margin-bottom:8px}
+.stepvis{height:120px;display:flex;align-items:center;margin-bottom:20px;border-bottom:2px dashed var(--divider)}
+.keys{display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:48px 48px;gap:6px}
+.key{display:grid;place-items:center;font-family:Galmuri11B,monospace;font-size:18px;border:2px solid var(--border);background:var(--panel);box-shadow:0 4px 0 var(--border);color:var(--text)}
+.k-w{grid-column:2;grid-row:1;background:var(--accent);color:var(--onaccent);border-color:var(--accent);box-shadow:0 4px 0 #5b2cf0} .k-a{grid-column:1;grid-row:2} .k-s{grid-column:2;grid-row:2} .k-d{grid-column:3;grid-row:2}
+.glyphs{display:flex;gap:12px}
+.gl{width:64px;height:64px;display:grid;place-items:center;font-size:32px;border:2px solid var(--border);box-shadow:4px 4px 0 var(--shadow)}
+.g1{background:#ff9a3c;color:#3a1a00;border-color:#ff9a3c} .g2{background:#ff4d5e;color:#fff;border-color:#ff4d5e} .g3{background:#ffd84a;color:#3a2a00;border-color:#ffd84a}
+.turns{font-family:Galmuri11B,monospace} .turns b{font-size:64px;line-height:1;color:var(--accent);font-weight:normal} .turns span{font-size:18px;color:var(--muted);margin-left:8px}
+/* features */
+.feats{display:flex;flex-direction:column;gap:96px}
+.feat{display:grid;grid-template-columns:680px 1fr;gap:72px;align-items:center}
+.feat.rev{grid-template-columns:1fr 680px} .feat.rev .fimg{order:2}
+.ftag{display:inline-block;font-family:GalmuriMono,monospace;font-size:12px;padding:4px 10px;margin-bottom:16px;border:2px solid currentColor}
+.c-cyan{color:var(--accent)} .c-lilac{color:var(--lilac)} .c-green{color:var(--green)} .c-gold{color:var(--gold)}
+.ftxt h3{font-size:32px}
+.ftxt p{color:var(--muted);font-size:17px;word-break:keep-all}
+.more{margin-top:72px;display:flex;gap:16px;align-items:center;padding:24px 28px;border:2px dashed var(--border);font-size:15px;color:var(--muted)}
+.more b{font-family:Galmuri11B,monospace;color:var(--text);font-weight:normal;font-size:18px;margin-right:4px}
+.more .soon{font-family:GalmuriMono,monospace;font-size:12px;color:var(--onaccent);background:var(--pink);padding:4px 8px}
+/* gallery */
+.galmain .win{box-shadow:10px 10px 0 #5b2cf0}
+.galrow{display:grid;grid-template-columns:repeat(6,1fr);gap:16px;margin-top:32px}
+.thumb img{width:100%;border:2px solid var(--divider);opacity:.75}
+.thumb.on img{border-color:var(--accent);opacity:1;box-shadow:4px 4px 0 var(--accent)}
+.thumb figcaption{font-family:Galmuri11,monospace;font-size:12px;color:var(--muted);margin-top:10px}
+.thumb.on figcaption{color:var(--accent)}
+/* story */
+.story{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
+.dlg .wb{padding:32px;font-size:17px;line-height:2}
+.dlg .who{display:inline-block;font-family:Galmuri11B,monospace;font-size:14px;padding:2px 10px;margin-bottom:8px}
+.dlg .line{margin-bottom:24px;word-break:keep-all}
+.dlg .nar{color:var(--muted);font-style:normal}
+.who.p{background:#22d3ee;color:#0a0716} .who.c{background:#ff4fa3;color:#fff} .who.d{background:#ff9a3c;color:#3a1a00}
+.next{font-family:GalmuriMono,monospace;font-size:12px;color:var(--accent);text-align:right}
+.chars{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.ch{position:relative;border:2px solid var(--border);background:var(--panel);box-shadow:6px 6px 0 var(--shadow);overflow:hidden}
+.ch .art{height:420px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
+.ch.p .art{background:linear-gradient(180deg,transparent,rgba(34,211,238,.22))}
+.ch.c .art{background:linear-gradient(180deg,transparent,rgba(255,79,163,.22))}
+.ch .art img{height:440px;width:auto;margin-bottom:-20px}
+.ch .info{padding:18px 20px;border-top:2px solid var(--border)}
+.ch .nm{font-family:Galmuri11B,monospace;font-size:20px}
+.ch .role{font-family:GalmuriMono,monospace;font-size:12px;margin-left:8px}
+.ch.p .role{color:var(--accent)} .ch.c .role{color:var(--pink)}
+.ch p{font-size:14px;color:var(--muted);margin-top:6px;word-break:keep-all}
+.delta{grid-column:1/3;display:flex;align-items:center;gap:20px;padding:18px 20px;border:2px solid var(--border);background:var(--panel);box-shadow:6px 6px 0 var(--shadow)}
+.dface{width:64px;height:64px;flex:none;background:#ff9a3c;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border:2px solid #3a1a00}
+.dface i{background:#3a1a00}
+.delta .nm{font-family:Galmuri11B,monospace;font-size:20px} .delta .role{font-family:GalmuriMono,monospace;font-size:12px;color:var(--orange);margin-left:8px}
+.delta p{font-size:14px;color:var(--muted);margin-top:4px}
+/* stack + timeline */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:64px}
+.stk{display:flex;align-items:center;gap:20px;padding:20px 0;border-bottom:2px solid var(--divider)}
+.stk:first-child{border-top:2px solid var(--divider)}
+.stkh{width:150px;flex:none;font-family:GalmuriMono,monospace;font-size:12px;color:var(--dim)}
+.chips{display:flex;gap:10px;flex-wrap:wrap}
+.chip{font-family:Galmuri11,monospace;font-size:14px;padding:6px 14px;background:var(--chip);border:2px solid var(--border);color:var(--text)}
+.tl{position:relative;display:flex;flex-direction:column;gap:0}
+.tli{position:relative;display:grid;grid-template-columns:24px 140px 1fr;align-items:center;gap:16px;padding:14px 0}
+.tli:before{content:'';position:absolute;left:10px;top:0;bottom:0;width:4px;background:var(--divider)}
+.tli.done:before{background:var(--accent)}
+.tld{position:relative;z-index:1;width:24px;height:24px;border:3px solid var(--divider);background:var(--bg)}
+.tli.done .tld{background:var(--accent);border-color:var(--accent)}
+.tli.now .tld{background:var(--pink);border-color:var(--pink);box-shadow:0 0 0 6px rgba(255,79,163,.25)}
+.tldate{font-family:GalmuriMono,monospace;font-size:12px;color:var(--muted)}
+.tli b{font-family:Galmuri11B,monospace;font-weight:normal;font-size:16px}
+.tli.now b:after{content:'NOW';margin-left:10px;font-family:GalmuriMono,monospace;font-size:12px;color:#fff;background:var(--pink);padding:2px 6px}
+/* cta */
+.cta{padding:0 0 120px}
+.cta .win{box-shadow:10px 10px 0 #5b2cf0}
+.cta .wb{padding:64px;display:flex;align-items:center;justify-content:space-between;background:#0c0a18;
+  background-image:radial-gradient(closest-side at 85% 50%,rgba(214,26,208,.28),transparent),radial-gradient(closest-side at 10% 20%,rgba(34,211,238,.18),transparent)}
+.cta h2{color:#eaf2ff} .cta p{color:#8b98b8;margin-top:12px;font-size:17px}
+.cta .prompt{font-family:GalmuriMono,monospace;font-size:14px;color:#5cf08a;margin-bottom:12px}
+.cta .btn{background:#15112e;color:#eaf2ff;border-color:#4c4aa8;box-shadow:4px 4px 0 #000}
+.cta .btn.pri{background:#22d3ee;color:#0a0716;border-color:#22d3ee;box-shadow:4px 4px 0 #5b2cf0}
+footer{border-top:2px solid var(--divider);background:var(--bg2);padding:40px 0}
+footer .wrap{display:flex;justify-content:space-between;align-items:center}
+footer .fl{font-family:GalmuriMono,monospace;font-size:12px;color:var(--dim);line-height:2}
+footer .fl b{color:var(--text);font-weight:normal}
+footer .fr{display:flex;gap:24px;font-family:Galmuri11,monospace;font-size:14px;color:var(--muted)}
+.ph{border-bottom:2px dotted var(--pink)}
+</style></head>
+<body style="margin:0;background:#0a0716">
+<div class="site">
+<nav><div class="wrap">
+  <div class="logo"><span class="lg">&gt;_</span>EXECUTOR</div>
+  <div class="links"><a class="on">소개</a><a>플레이 방법</a><a>특징</a><a>화면</a><a>스토리</a><a>만든 사람</a></div>
+  <div class="navr"><div class="tog"><span class="on">● DARK</span><span class="">○ LIGHT</span></div><a class="btn pri sm">다운로드 ↓</a></div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <div>
+    <span class="tag">동아리 발표회 출품작 · 2026</span>
+    <h1>명령을 실행하고,<br><em>버그를 제거하라.</em></h1>
+    <p class="lead">노트북 속으로 끌려 들어간 개발자가 한 칸씩 움직이며 버그를 치우는 턴제 퍼즐 게임. 정해진 턴 안에 출구를 찾아 시스템을 복구하세요.</p>
+    <div class="ctas"><a class="btn pri">▶ 게임 다운로드 <span class="ph">[링크]</span></a><a class="btn">플레이 영상 보기</a></div>
+    <div class="meta"><div><b>WASD</b>CONTROLS</div><div><b>★ ×3</b>PER STAGE</div><div><b>PC</b>WINDOWS</div></div>
+  </div>
+  <div class="herowin">
+    <div class="win " ><div class="wt"><span class="wtl">Executor.exe</span><span class="wbtn"><i>_</i><i>□</i><i class="x">×</i></span></div><div class="wb"><img src="assets/title_art.jpg" alt="Executor 타이틀 화면"></div></div>
+    <div class="win term" ><div class="wt"><span class="wtl">terminal</span><span class="wbtn"><i>_</i><i>□</i><i class="x">×</i></span></div><div class="wb"><span class="c">C:\Users\you&gt;</span> executor --start<br><span class="g">[OK]</span> 시스템 접속 완료<br><span class="r">[WARN]</span> 버그 12개 감지됨<br><span class="c">&gt;</span> 플레이어 입장 대기 중 <span class="cursor"></span></div></div>
+  </div>
+</div></header>
+
+<section class="band" id="how"><div class="wrap">
+  <div class="sechead"><span class="secnum">&gt; 01 / HOW TO PLAY</span><h2>규칙은 간단하게, 퍼즐은 깊게</h2><p class="secsub">헬테이커에서 영감을 받은 한 칸씩 움직이는 퍼즐. 모든 움직임이 턴을 소모하니, 한 수 한 수 신중하게.</p></div>
+  <div class="steps"><div class="win step" ><div class="wt"><span class="wtl">step_01.exe</span><span class="wbtn"><i>_</i><i>□</i><i class="x">×</i></span></div><div class="wb"><div class="stepvis"><div class="keys"><span class="key k-w">W</span><span class="key k-a">A</span><span class="key k-s">S</span><span class="key k-d">D</span></div></div><div class="stepnum">STEP 01</div><h3>이동</h3><p>WASD로 한 칸씩 움직입니다. 한 번 움직일 때마다 턴이 하나씩 줄어들어요.</p></div></div><div class="win step" ><div class="wt"><span class="wtl">step_02.exe</span><span class="wbtn"><i>_</i><i>□</i><i class="x">×</i></span></div><div class="wb"><div class="stepvis"><div class="glyphs"><span class="gl g1">▣</span><span class="gl g2">▦</span><span class="gl g3">⌐</span></div></div><div class="stepnum">STEP 02</div><h3>밀고 · 부수고 · 열기</h3><p>상자를 밀고, 방화벽을 부수고, 열쇠로 문을 엽니다. 숨겨진 길과 가짜 벽도 있어요.</p></div></div><div class="win step" ><div class="wt"><span class="wtl">step_03.exe</span><span class="wbtn"><i>_</i><i>□</i><i class="x">×</i></span></div><div class="wb"><div class="stepvis"><div class="turns"><b>12</b><span>/ 15 TURN</span></div></div><div class="stepnum">STEP 03</div><h3>기준 턴 안에 출구</h3><p>정해진 턴 안에 출구에 닿으면 클리어. 더 적은 턴과 숨겨진 조건으로 별 3개를 노려보세요.</p></div></div></div>
+</div></section>
+
+<section id="feat"><div class="wrap">
+  <div class="sechead"><span class="secnum">&gt; 02 / FEATURES</span><h2>컴퓨터 속이라서 가능한 것들</h2><p class="secsub">단순히 상자만 미는 게임이 아니에요. 개발자의 세계를 퍼즐로 옮겼습니다.</p></div>
+  <div class="feats"><div class="feat ">
+  <div class="fimg"><div class="win shotwin" ><div class="wt"><span class="wtl">hack.exe</span><span class="wbtn"><i>_</i><i>□</i><i class="x">×</i></span></div><div class="wb"><img src="assets/shot_Hack.jpg" alt="해킹 미니게임"></div></div></div>
+  <div class="ftxt"><span class="ftag c-cyan">FEATURE 01</span><h3>해킹 미니게임</h3><p>맵 속 컴퓨터에 접속해 제한 시간 안에 단어를 입력하면 벽이 열리거나 턴이 늘어납니다.</p></div>
+</div><div class="feat rev">
+  <div class="fimg"><div class="win shotwin" ><div class="wt"><span class="wtl">warp.exe</span><span class="wbtn"><i>_</i><i>□</i><i class="x">×</i></span></div><div class="wb"><img src="assets/shot_Warp.jpg" alt="체크포인트 · 워프"></div></div></div>
+  <div class="ftxt"><span class="ftag c-lilac">FEATURE 02</span><h3>체크포인트 · 워프</h3><p>체크포인트를 순서대로 밟고, 불안정한 구역에서는 워프로 다른 지점에 이동합니다.</p></div>
+</div><div class="feat ">
+  <div class="fimg"><div class="win shotwin" ><div class="wt"><span class="wtl">guidebook.md</span><span class="wbtn"><i>_</i><i>□</i><i class="x">×</i></span></div><div class="wb"><img src="assets/shot_PopGuide.jpg" alt="개발 용어 도감"></div></div></div>
+  <div class="ftxt"><span class="ftag c-green">FEATURE 03</span><h3>개발 용어 도감</h3><p>맵 곳곳의 이상 현상을 조사하면 실제 개발 용어가 도감에 기록됩니다. 플레이하면서 배워요.</p></div>
+</div><div class="feat rev">
+  <div class="fimg"><div class="win shotwin" ><div class="wt"><span class="wtl">ranking.exe</span><span class="wbtn"><i>_</i><i>□</i><i class="x">×</i></span></div><div class="wb"><img src="assets/shot_Ranking.jpg" alt="친구 랭킹"></div></div></div>
+  <div class="ftxt"><span class="ftag c-gold">FEATURE 04</span><h3>친구 랭킹</h3><p>스테이지별 최소 턴과 별 개수로 친구와 순위를 겨룹니다. 계정으로 기록이 저장돼요.</p></div>
+</div></div>
+  <div class="more"><b>맵 제작 · 공유</b> 직접 맵을 만들고 친구에게 공유하는 기능을 준비 중이에요. <span class="soon">COMING SOON</span></div>
+</div></section>
+
+<section class="band" id="shots"><div class="wrap">
+  <div class="sechead"><span class="secnum">&gt; 03 / SCREENSHOTS</span><h2>화면 둘러보기</h2></div>
+  <div class="galmain"><div class="win shotwin big" ><div class="wt"><span class="wtl">screenshot_01.png</span><span class="wbtn"><i>_</i><i>□</i><i class="x">×</i></span></div><div class="wb"><img src='assets/shot_Main.jpg' alt='메인 화면'></div></div></div><div class="galrow"><figure class="thumb on"><img src="assets/shot_Main.jpg" alt="메인 바탕화면"><figcaption>메인 바탕화면</figcaption></figure><figure class="thumb "><img src="assets/shot_StageSelect.jpg" alt="스테이지 선택"><figcaption>스테이지 선택</figcaption></figure><figure class="thumb "><img src="assets/shot_Game.jpg" alt="인게임"><figcaption>인게임</figcaption></figure><figure class="thumb "><img src="assets/shot_Results.jpg" alt="클리어 결과"><figcaption>클리어 결과</figcaption></figure><figure class="thumb "><img src="assets/shot_DialogueChoice.jpg" alt="대화 선택지"><figcaption>대화 선택지</figcaption></figure><figure class="thumb "><img src="assets/shot_Prologue1.jpg" alt="프롤로그"><figcaption>프롤로그</figcaption></figure></div>
+</div></section>
+
+<section id="story"><div class="wrap">
+  <div class="sechead"><span class="secnum">&gt; 04 / STORY</span><h2>마감 전날 밤, 노트북이 나를 삼켰다</h2></div>
+  <div class="story">
+    <div class="win dlg" ><div class="wt"><span class="wtl">prologue.txt</span><span class="wbtn"><i>_</i><i>□</i><i class="x">×</i></span></div><div class="wb"><p class="line nar">새벽 세 시. 끝나지 않는 오류 로그를 바라보다 잠깐 눈을 감았다.</p>
+      <p class="line nar">다시 눈을 떴을 때, 나는 모니터 안쪽에 서 있었다.</p>
+      <div class="line"><span class="who d">델타</span><br>접속자 확인. …당신, 개발자 맞죠? 그럼 이 버그들, 직접 치워 주셔야겠어요.</div>
+      <div class="line"><span class="who p">나</span><br>잠깐, 여기가 어딘데?</div>
+      <div class="next">▼ 계속하려면 클릭</div></div></div>
+    <div class="chars">
+      <div class="ch p"><div class="art"><img src="assets/protag_ill.png" alt="주인공"></div><div class="info"><span class="nm">주인공</span><span class="role">PLAYER</span><p>노트북 속으로 끌려 들어간 개발자. 이름은 플레이어가 직접 정해요.</p></div></div>
+      <div class="ch c"><div class="art"><img src="assets/cassia_ill.png" alt="카시아"></div><div class="info"><span class="nm">카시아</span><span class="role">CASSIA</span><p>컴퓨터 세계에서 만나는 수수께끼의 인물.</p></div></div>
+      <div class="delta"><div class="dface"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><i></i><span></span><span></span><i></i><span></span><span></span><span></span><span></span><i></i><span></span><span></span><i></i><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><i></i><i></i><i></i><i></i><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div><span class="nm">델타</span><span class="role">AI GUIDE</span><p>시스템 안내를 맡은 AI. 스테이지마다 힌트와 잔소리를 건넵니다.</p></div></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="band" id="dev"><div class="wrap">
+  <div class="sechead"><span class="secnum">&gt; 05 / BEHIND</span><h2>혼자서, 6주 동안 만들었어요</h2><p class="secsub">기획부터 디자인, 서버, 클라이언트까지 1인 개발 프로젝트입니다.</p></div>
+  <div class="two">
+    <div><h3>기술 스택</h3><div style="height:16px"></div><div class="stk"><span class="stkh">CLIENT</span><div class="chips"><span class=chip>Unity</span><span class=chip>C#</span></div></div><div class="stk"><span class="stkh">SERVER</span><div class="chips"><span class=chip>Spring Boot</span><span class=chip>JWT</span></div></div><div class="stk"><span class="stkh">DATA</span><div class="chips"><span class=chip>MySQL</span><span class=chip>Redis</span><span class=chip>AWS RDS</span></div></div><div class="stk"><span class="stkh">DESIGN · SOUND</span><div class="chips"><span class=chip>Figma</span><span class=chip>Procreate</span><span class=chip>GarageBand</span></div></div></div>
+    <div><h3>개발 일정</h3><div style="height:16px"></div><div class="tl"><div class="tli done"><span class="tld"></span><span class="tldate">10.12 – 10.17</span><b>기획서 · 시나리오</b></div><div class="tli done"><span class="tld"></span><span class="tldate">10.18 – 10.24</span><b>DB · 흐름 설계</b></div><div class="tli done"><span class="tld"></span><span class="tldate">10.25 – 11.07</span><b>디자인</b></div><div class="tli done"><span class="tld"></span><span class="tldate">11.08 – 11.14</span><b>백엔드</b></div><div class="tli done"><span class="tld"></span><span class="tldate">11.15 – 11.21</span><b>Unity 개발</b></div><div class="tli now"><span class="tld"></span><span class="tldate">11.22 – 11.25</span><b>마무리 · 발표</b></div></div></div>
+  </div>
+</div></section>
+
+<section class="cta" style="padding-top:120px"><div class="wrap">
+  <div class="win " ><div class="wt"><span class="wtl">run.bat</span><span class="wbtn"><i>_</i><i>□</i><i class="x">×</i></span></div><div class="wb"><div><p class="prompt">C:\&gt; executor.exe --play</p><h2>버그 잡으러 갈 준비 됐나요?</h2><p>발표회 현장에서 직접 플레이해 보거나, 지금 바로 내려받으세요.</p></div><div style="display:flex;gap:16px"><a class="btn">GitHub</a><a class="btn pri">▶ 다운로드</a></div></div></div>
+</div></section>
+
+<footer><div class="wrap">
+  <div class="fl"><b>EXECUTOR</b> — 2026 동아리 발표회 출품작<br>made by 이밤 (seyoung5309) · leenight5309@naver.com</div>
+  <div class="fr"><a>GitHub <span class="ph">[링크]</span></a><a>플레이 영상</a><a>문의</a></div>
+</div></footer>
+</div>
+</body></html>
